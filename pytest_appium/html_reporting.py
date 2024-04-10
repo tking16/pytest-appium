@@ -30,11 +30,7 @@ def _gather_screenshot(item, report, driver, summary, extra):
     pytest_html = item.config.pluginmanager.getplugin('html')
     if pytest_html is not None:
         # add screenshot to the html report
-        try:
-            extra.append(pytest_html.extras.image(screenshot, 'Screenshot'))
-        except Exception as e:
-            summary.append('Something went wrong attaching Screenshot: {0}'.format(e))
-            return
+        extra.append(pytest_html.extras.image(screenshot, 'Screenshot'))
 
 def _gather_video(item, report, driver, summary, extra):
     try:
@@ -44,12 +40,8 @@ def _gather_video(item, report, driver, summary, extra):
         return
     pytest_html = item.config.pluginmanager.getplugin('html')
     if pytest_html is not None:
-        # add recording to the html report
-        try:
-            extra.append(pytest_html.extras.mp4(video, 'Video'))
-        except Exception as e:
-            summary.append('Something went wrong attaching video: {0}'.format(e))
-            return
+        # add screenshot to the html report
+        extra.append(pytest_html.extras.mp4(video, 'Video'))
 
 
 def _gather_page_source(item, report, driver, summary, extra):
