@@ -41,7 +41,11 @@ def _gather_video(item, report, driver, summary, extra):
     pytest_html = item.config.pluginmanager.getplugin('html')
     if pytest_html is not None:
         # add screenshot to the html report
-        extra.append(pytest_html.extras.mp4(video, 'Video'))
+        try:
+            extra.append(pytest_html.extras.mp4(video, 'Video'))
+        except Exception as e:
+            summary.append('Something went wrogn attaching video: {0}'.format(e))
+            return
 
 
 def _gather_page_source(item, report, driver, summary, extra):
