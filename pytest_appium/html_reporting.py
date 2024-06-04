@@ -37,7 +37,7 @@ def _gather_video(item, report, driver, summary, extra):
         video = driver.stop_recording_screen()
     except Exception as e:
         summary.append('WARNING: Failed to gather video: {0}'.format(e))
-        return
+        pass
     pytest_html = item.config.pluginmanager.getplugin('html')
     if video and pytest_html is not None:
         # add screenshot to the html report
