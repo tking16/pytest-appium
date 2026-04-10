@@ -2,7 +2,7 @@ import logging
 from time import sleep
 from collections import namedtuple
 
-from appium.webdriver.common.touch_action import TouchAction
+from appium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException, WebDriverException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -173,9 +173,10 @@ class AppiumElementHelperMixin():
 class Gestures():
     def tap_a_point(self, x=0, y=0):
         """ Click A Point does not work as it uses action.press() """
-        action = TouchAction(self)
+        action = ActionChains(self)
         try:
-            action.tap(x=float(x), y=float(y)).perform()
+            action.w3c_actions.pointer_action.move_to_location(x, y).perform()
+            action.w3c_actions.pointer_action.pointer_down().perform()
         except Exception:
             assert False, "Can't click on a point at (%s,%s)" % (x, y)
 
