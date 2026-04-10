@@ -74,10 +74,7 @@ def driver_kwargs(request, capabilities):
     options = AppiumOptions().load_capabilities(_pre_process_capabilities(capabilities))
     kwargs = dict(
         command_executor='http://{0.appium_host}:{0.appium_port}'.format(request.config.option),
-        options=options,
-        browser_profile=None,
-        proxy=None,
-        keep_alive=False,
+        options=options
     )
     return kwargs
 
