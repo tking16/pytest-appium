@@ -119,11 +119,11 @@ class AppiumReportPlugin(object):
         driver = getattr(item, '_driver', None)
         xfail = hasattr(report, 'wasxfail')
         failure = (report.skipped and xfail) or (report.failed and not xfail)
-        when = item.config.getini('appium_capture_debug').lower()
+        when = (item.config.getini('appium_capture_debug') or '').lower()
         capture_debug = when == 'always' or (when == 'failure' and failure)
         if driver is not None:
             if capture_debug:
-                exclude = item.config.getini('appium_exclude_debug').lower()
+                exclude = (item.config.getini('appium_exclude_debug') or '').lower()
                 if 'app_strings' not in exclude:
                     _gather_app_strings(item, report, driver, summary, extra)
                 if 'screenshot' not in exclude:
