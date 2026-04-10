@@ -228,19 +228,27 @@ def pytest_collection_modifyitems(config, items):
     """
 
     # Filter tests that are not targeted for this platform
-    try:
-        from pytest_variables.plugin import VARIABLES_KEY
-        variables = config.stash.get(VARIABLES_KEY, {})
-    except (ImportError, AttributeError):
-        variables = getattr(config, '_variables', {})
+    variables = getattr(config, '_variables', {})
 
-    current_platform = variables.get('capabilities', {}).get('platformName', '').lower()
+    # If not in legacy _variables, try to discover it in the new config.stash (Pytest 7+)
+    if not variables:
+        for key in getattr(config.stash, '_storage', {}).keys():
+            val = config.stash.get(key, None)
+            if isinstance(val, dict) and ('capabilities' in val or 'platformName' in val):
+                variables = val
+                break
+
+    capabilities = variables.get('capabilities', variables)
+    current_platform = str(capabilities.get('platformName', '')).lower()
+
     def select_test(item):
         platform_marker = item.get_closest_marker("platform")
         if platform_marker and platform_marker.args and current_platform:
-            test_platform_specified = platform_marker.args[0].lower()
+            test_platform_specified = str(platform_marker.args[0]).lower()
             if test_platform_specified != current_platform:
                 return False
         return True
+
+    from itertools import filterfalse
     config.hook.pytest_deselected(items=filterfalse(select_test, items))
     items[:] = filter(select_test, items)
