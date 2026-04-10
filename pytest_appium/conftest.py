@@ -11,6 +11,7 @@ from itertools import filterfalse
 
 import pytest
 from appium import webdriver
+from appium.options.common.base import AppiumOptions
 
 from ._utils import get_json, post_json
 from .driver.proxy.proxy_mixin import proxy
@@ -49,13 +50,31 @@ def session_capabilities(request, variables):
     return capabilities
 
 
+def _pre_process_capabilities(capabilities):
+    """
+    Ensure all non-standard W3C capabilities are prefixed with appium:
+    """
+    standard_w3c_caps = [
+        'browserName', 'browserVersion', 'platformName', 'acceptInsecureCerts',
+        'pageLoadStrategy', 'proxy', 'setWindowRect', 'timeouts', 'unhandledPromptBehavior'
+    ]
+    processed_caps = {}
+    for k, v in capabilities.items():
+        if ':' not in k and k not in standard_w3c_caps:
+            processed_caps[f'appium:{k}'] = v
+        else:
+            processed_caps[k] = v
+    return processed_caps
+
+
 def driver_kwargs(request, capabilities):
     """ """
     # Assertions of capabilitys should go here
     #appium_user = f'{0.appium_username}:{0.appium_access_key}@'
+    options = AppiumOptions().load_capabilities(_pre_process_capabilities(capabilities))
     kwargs = dict(
         command_executor='http://{0.appium_host}:{0.appium_port}'.format(request.config.option),
-        desired_capabilities=capabilities,
+        options=options,
         browser_profile=None,
         proxy=None,
         keep_alive=False,
@@ -106,7 +125,7 @@ def _appium_is_device_available(appium_wd_api_endpoint, desiredCapabilities={}, 
     """
     response = post_json(
         url=f'''{appium_wd_api_endpoint}/session''',
-        data={"desiredCapabilities": desiredCapabilities},
+        data={"capabilities": {"alwaysMatch": _pre_process_capabilities(desiredCapabilities)}},
     )
     return desiredCapabilities[appNameKey] in response.get('value', {}).get('message', '')
 
@@ -212,7 +231,13 @@ def pytest_collection_modifyitems(config, items):
     """
 
     # Filter tests that are not targeted for this platform
-    current_platform = config._variables.get('capabilities',{}).get('platformName','').lower()
+    try:
+        from pytest_variables.plugin import VARIABLES_KEY
+        variables = config.stash.get(VARIABLES_KEY, {})
+    except (ImportError, AttributeError):
+        variables = getattr(config, '_variables', {})
+
+    current_platform = variables.get('capabilities', {}).get('platformName', '').lower()
     def select_test(item):
         platform_marker = item.get_closest_marker("platform")
         if platform_marker and platform_marker.args and current_platform:
