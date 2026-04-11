@@ -27,18 +27,27 @@ log = logging.getLogger(__name__)
 def _environment(request, session_capabilities):
     """Provide additional environment details to pytest-html report"""
     config = request.config
-    # add environment details to the pytest-html plugin
-    #config._environment.append(('Driver', config.option.driver))
-    # add capabilities to environment
+    capabilities_list = [(f'Capability: {k}', v) for k, v in session_capabilities.items()]
+
+    # Pytest 9 / Pytest-HTML 4.0 (Stash)
+    try:
+        from pytest_metadata.plugin import metadata_key
+        if metadata_key in config.stash:
+            metadata = config.stash[metadata_key]
+            for k, v in capabilities_list:
+                metadata[k] = v
+            metadata['Server'] = f"http://{config.option.appium_host}:{config.option.appium_port}"
+            return  # Finish here if stash exists
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    # Legacy Fallback (Pytest < 9)
     if not hasattr(config, '_environment'):
-        log.warn('pytest.config has no _environment')
+        log.warning('pytest.config has no _environment')
         return
-    config._environment.extend([('Capability', '{0}: {1}'.format(
-        k, v)) for k, v in session_capabilities.items()])
-    #if config.option.driver == 'Remote':
-    config._environment.append(
-        ('Server', 'http://{0.appium_host}:{0.appium_port}'.format(config.option))
-    )
+    
+    config._environment.extend(capabilities_list)
+    config._environment.append(('Server', f'http://{config.option.appium_host}:{config.option.appium_port}'))
 
 
 @pytest.fixture(scope='session')
