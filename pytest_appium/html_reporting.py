@@ -24,6 +24,8 @@ def _gather_app_strings(item, report, driver, summary, extra):
 def _gather_screenshot(item, report, driver, summary, extra):
     try:
         screenshot = driver.get_screenshot_as_base64()
+        if isinstance(screenshot, str):
+            screenshot = screenshot.replace('\n', '').replace('\r', '')
     except Exception as e:
         summary.append('WARNING: Failed to gather screenshot: {0}'.format(e))
         return
@@ -35,6 +37,8 @@ def _gather_screenshot(item, report, driver, summary, extra):
 def _gather_video(item, report, driver, summary, extra):
     try:
         video = driver.stop_recording_screen()
+        if isinstance(video, str):
+            video = video.replace('\n', '').replace('\r', '')
     except Exception as e:
         summary.append('WARNING: Failed to gather video: {0}'.format(e))
         return
@@ -115,7 +119,9 @@ class AppiumReportPlugin(object):
         outcome = yield
         report = outcome.get_result()
         summary = []
-        extra = getattr(report, 'extra', [])
+        extra = getattr(report, 'extras', None)
+        if extra is None:
+            extra = getattr(report, 'extra', [])
         driver = getattr(item, '_driver', None)
         xfail = hasattr(report, 'wasxfail')
         failure = (report.skipped and xfail) or (report.failed and not xfail)
@@ -140,5 +146,8 @@ class AppiumReportPlugin(object):
             item.config.hook.pytest_appium_runtest_makereport(item=item, report=report, summary=summary, extra=extra)
         if summary:
             report.sections.append(('pytest-appium', '\n'.join(summary)))
-        report.extra = extra
+        if hasattr(report, 'extras'):
+            report.extras = extra
+        else:
+            report.extra = extra
 
