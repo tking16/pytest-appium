@@ -1,6 +1,6 @@
 import pytest
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def _gather_app_strings(item, report, driver, summary, extra):
@@ -92,7 +92,7 @@ def _gather_logs(item, report, driver, summary, extra):
 def format_log(log):
     timestamp_format = '%Y-%m-%d %H:%M:%S.%f'
     entries = [u'{0} {1[level]} - {1[message]}'.format(
-        datetime.utcfromtimestamp(entry['timestamp'] / 1000.0).strftime(
+        datetime.fromtimestamp(entry['timestamp'] / 1000.0, tz=timezone.utc).strftime(
             timestamp_format), entry).rstrip() for entry in log]
     log = '\n'.join(entries)
     #if not PY3:
