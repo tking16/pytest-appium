@@ -78,7 +78,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_report_header(config, startdir):
+def pytest_report_header(config):
     """return a string to be displayed as header info for terminal reporting."""
     capabilities = config.getoption('capabilities')
     if capabilities:
