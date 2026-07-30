@@ -4,4 +4,4 @@
 
 **/.vscode
 
-.pytest_appium.egg-info
+*.egg-info
